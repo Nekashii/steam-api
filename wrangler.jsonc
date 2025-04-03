@@ -7,10 +7,6 @@
 	"name": "steam-api",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-04-03",
-	"assets": {
-		"binding": "ASSETS",
-		"directory": "./public"
-	},
 	"observability": {
 		"enabled": true
 	},
