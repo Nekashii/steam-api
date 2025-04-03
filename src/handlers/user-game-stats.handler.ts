@@ -1,7 +1,8 @@
 import { Context } from 'hono'
 import { DataProfileGamelistDto } from '../dtos/data-profile-gameslist.dto'
-import { UserStatus } from '../types/user-status.type'
 import { UserGameStatsMapper } from '../mappers/user-game-stats.mapper'
+import { StorageService } from '../services/storage.service'
+import { UserStatus } from '../types/user-status.type'
 
 export async function userGameStatsHandler(c: Context<{ Bindings: CloudflareBindings }>) {
   const { prefix, userId, appId } = c.req.param()
@@ -51,5 +52,10 @@ export async function userGameStatsHandler(c: Context<{ Bindings: CloudflareBind
     gameData,
     c.env
   )
+  const storageService = new StorageService(c.env.STORAGE)
+  const playtimeAtMonthStart = await storageService.getPlaytimeAtMonthStart(prefix, userId, appId)
+  if (playtimeAtMonthStart)
+    userGameStats.app.playtimeMonth = Math.floor((userGameStats.app.playtimeForever - playtimeAtMonthStart) * 10) / 10
+  userGameStats.app.playtimeLimit = await storageService.getPlaytimeLimit(prefix, userId, appId)
   return c.json(userGameStats)
 }
