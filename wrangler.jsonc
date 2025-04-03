@@ -10,7 +10,13 @@
   "observability": {
     "enabled": true
   },
-  "keep_vars": true
+  "keep_vars": true,
+  "kv_namespaces": [
+    {
+      "binding": "STORAGE",
+      "id": "1c659b2e27a64b97a0b9722678131a60"
+    }
+  ]
   /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
