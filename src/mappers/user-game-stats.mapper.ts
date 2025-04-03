@@ -1,6 +1,7 @@
 import { DataProfileGamelistDto } from '../dtos/data-profile-gameslist.dto'
 import { UserGameStats } from '../models/user-game-stats.model'
 import { UserStatus } from '../types/user-status.type'
+import { trim } from '../utils/number.util'
 
 export abstract class UserGameStatsMapper {
   static fromScrapedData(
@@ -22,8 +23,8 @@ export abstract class UserGameStatsMapper {
         name,
         coverLandscape: `${STEAM_SHARED_CDN_URL}/store_item_assets/steam/apps/${appid}/header.jpg`,
         coverPortrait: `${STEAM_SHARED_CDN_URL}/store_item_assets/steam/apps/${appid}/${capsule_filename}`,
-        playtimeForever: Math.floor(playtime_forever / 6) / 10,
-        playtime2weeks: Math.floor((playtime_2weeks ?? 0) / 6) / 10,
+        playtimeForever: trim(playtime_forever / 60),
+        playtime2weeks: trim((playtime_2weeks ?? 0) / 60),
       },
     }
   }
