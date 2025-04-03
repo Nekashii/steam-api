@@ -22,8 +22,8 @@ export abstract class UserGameStatsMapper {
         name,
         coverLandscape: `${STEAM_SHARED_CDN_URL}/store_item_assets/steam/apps/${appid}/header.jpg`,
         coverPortrait: `${STEAM_SHARED_CDN_URL}/store_item_assets/steam/apps/${appid}/${capsule_filename}`,
-        playtimeForever: playtime_forever,
-        playtime2weeks: playtime_2weeks ?? 0,
+        playtimeForever: Math.floor(playtime_forever / 6) / 10,
+        playtime2weeks: Math.floor((playtime_2weeks ?? 0) / 6) / 10,
       },
     }
   }
