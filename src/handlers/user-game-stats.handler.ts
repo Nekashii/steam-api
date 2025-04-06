@@ -54,8 +54,11 @@ export async function userGameStatsHandler(c: Context<{ Bindings: CloudflareBind
     c.env
   )
   const storageService = new StorageService(c.env.STORAGE)
-  const playtimeAtMonthStart = await storageService.getPlaytimeAtMonthStart(prefix, userId, appId)
+  const [playtimeAtMonthStart, playtimeLimit] = await Promise.all([
+    storageService.getPlaytimeAtMonthStart(prefix, userId, appId),
+    storageService.getPlaytimeLimit(prefix, userId, appId),
+  ])
   if (playtimeAtMonthStart) userGameStats.app.playtimeMonth = trim(userGameStats.app.playtimeForever - playtimeAtMonthStart)
-  userGameStats.app.playtimeLimit = await storageService.getPlaytimeLimit(prefix, userId, appId)
+  userGameStats.app.playtimeLimit = playtimeLimit
   return c.json(userGameStats)
 }
