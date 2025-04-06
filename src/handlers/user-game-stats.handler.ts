@@ -4,43 +4,50 @@ import { UserGameStatsMapper } from '../mappers/user-game-stats.mapper'
 import { StorageService } from '../services/storage.service'
 import { UserStatus } from '../types/user-status.type'
 import { trim } from '../utils/number.util'
+import { refreshCookie } from '../utils/steam.utils'
 
 export async function userGameStatsHandler(c: Context<{ Bindings: CloudflareBindings }>) {
+  const storageService = new StorageService(c.env.STORAGE)
   const { prefix, userId, appId } = c.req.param()
-  const res = await fetch(`${c.env.STEAM_WEB_URL}/${prefix}/${userId}/games/?tab=all`, { headers: { Cookie: c.env.STEAM_AUTH_COOKIE } })
+  const res = await fetch(`${c.env.STEAM_WEB_URL}/${prefix}/${userId}/games/?tab=all`, {
+    headers: { Cookie: await storageService.getAuthCooke() },
+  })
   let needLogin = false
   let userStatus!: UserStatus
   let avatar!: string
   let avatarFrame!: string | undefined
   let dataProfileGameslist!: DataProfileGamelistDto
-  await new HTMLRewriter()
-    .on('.login', {
-      element: () => {
-        needLogin = true
-      },
-    })
-    .on('#gameslist_config', {
-      element: e => {
-        dataProfileGameslist = JSON.parse(e.getAttribute('data-profile-gameslist')!.replaceAll('&quot;', '"'))
-      },
-    })
-    .on('.playerAvatar.medium', {
-      element: e => {
-        userStatus = e.getAttribute('class')!.split(' ').at(-1) as UserStatus
-      },
-    })
-    .on('.playerAvatar.medium>img', {
-      element: e => {
-        avatar = e.getAttribute('src')!
-      },
-    })
-    .on('.playerAvatar.medium>.profile_avatar_frame>img', {
-      element: e => {
-        avatarFrame = e.getAttribute('src')!
-      },
-    })
-    .transform(res)
-    .arrayBuffer()
+  await Promise.all([
+    refreshCookie(res, storageService),
+    new HTMLRewriter()
+      .on('.login', {
+        element: () => {
+          needLogin = true
+        },
+      })
+      .on('#gameslist_config', {
+        element: e => {
+          dataProfileGameslist = JSON.parse(e.getAttribute('data-profile-gameslist')!.replaceAll('&quot;', '"'))
+        },
+      })
+      .on('.playerAvatar.medium', {
+        element: e => {
+          userStatus = e.getAttribute('class')!.split(' ').at(-1) as UserStatus
+        },
+      })
+      .on('.playerAvatar.medium>img', {
+        element: e => {
+          avatar = e.getAttribute('src')!
+        },
+      })
+      .on('.playerAvatar.medium>.profile_avatar_frame>img', {
+        element: e => {
+          avatarFrame = e.getAttribute('src')!
+        },
+      })
+      .transform(res)
+      .arrayBuffer(),
+  ])
   if (needLogin) return new Response(undefined, { status: 401 })
   if (!userStatus) return new Response(undefined, { status: 404 })
   const gameData = dataProfileGameslist.rgGames.find(({ appid }) => appid === Number(appId))
@@ -53,7 +60,6 @@ export async function userGameStatsHandler(c: Context<{ Bindings: CloudflareBind
     gameData,
     c.env
   )
-  const storageService = new StorageService(c.env.STORAGE)
   const [playtimeAtMonthStart, playtimeLimit] = await Promise.all([
     storageService.getPlaytimeAtMonthStart(prefix, userId, appId),
     storageService.getPlaytimeLimit(prefix, userId, appId),

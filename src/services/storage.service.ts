@@ -1,4 +1,6 @@
 export class StorageService {
+  private readonly authCookieStorageKey = 'auth.cookie'
+
   constructor(private readonly storage: KVNamespace) {}
 
   async getPlaytimesAtMonthStart(prefix: string, userId: string): Promise<Record<string, number>> {
@@ -21,5 +23,13 @@ export class StorageService {
     const limits = await this.getPlaytimeLimits(prefix, userId)
     const limit = limits[appId]
     return limit
+  }
+
+  async getAuthCooke(): Promise<string> {
+    return (await this.storage.get(this.authCookieStorageKey))!
+  }
+
+  async setAuthCooke(cookie: string): Promise<void> {
+    await this.storage.put(this.authCookieStorageKey, cookie)
   }
 }
