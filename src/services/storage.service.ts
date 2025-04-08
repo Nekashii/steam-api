@@ -1,3 +1,5 @@
+import { Cookie } from '../types/cookie.type'
+
 export class StorageService {
   private readonly authCookieStorageKey = 'auth.cookie'
 
@@ -25,11 +27,11 @@ export class StorageService {
     return limit
   }
 
-  async getAuthCooke(): Promise<string> {
-    return (await this.storage.get(this.authCookieStorageKey))!
+  async getAuthCooke(): Promise<Cookie> {
+    return JSON.parse((await this.storage.get(this.authCookieStorageKey)) ?? '{}')
   }
 
-  async setAuthCooke(cookie: string): Promise<void> {
-    await this.storage.put(this.authCookieStorageKey, cookie)
+  async setAuthCooke(cookie: Cookie): Promise<void> {
+    await this.storage.put(this.authCookieStorageKey, JSON.stringify(cookie))
   }
 }
