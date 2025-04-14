@@ -3,7 +3,7 @@ import { DataProfileGamelistDto } from '../dtos/data-profile-gameslist.dto'
 import { UserGameStatsMapper } from '../mappers/user-game-stats.mapper'
 import { StorageService } from '../services/storage.service'
 import { UserStatus } from '../types/user-status.type'
-import { getCookie, getCookieString } from '../utils/cookie.utilts'
+import { getCookieString } from '../utils/cookie.utilts'
 import { trim } from '../utils/number.util'
 
 const redirectLimit = 5
@@ -13,8 +13,8 @@ export async function userGameStatsHandler(c: Context<{ Bindings: CloudflareBind
   const { prefix, userId, appId } = c.req.param()
 
   let res!: Response
-  const storedCookie = await storageService.getAuthCooke()
-  let cookie = storedCookie
+  const cookie = await storageService.getAuthCooke()
+  let storedCookie = getCookieString(cookie)
   const tasks: Promise<any>[] = []
 
   for (
@@ -26,11 +26,14 @@ export async function userGameStatsHandler(c: Context<{ Bindings: CloudflareBind
     if (cookie) headers['Cookie'] = getCookieString(cookie)
     res = await fetch(nextLocation, { redirect: 'manual', headers })
     nextLocation = res.headers.get('Location')
-    const newCookie = res.headers.get('Set-Cookie')
-    if (newCookie) cookie = { ...cookie, ...getCookie(newCookie) }
+    for (const part of res.headers.getSetCookie()) {
+      const [key, value] = part.split(';')[0].split('=')
+      if (value === 'deleted') delete cookie[key]
+      else cookie[key] = value
+    }
   }
 
-  if (cookie !== storedCookie) tasks.push(storageService.setAuthCooke(cookie))
+  if (getCookieString(cookie) !== storedCookie) tasks.push(storageService.setAuthCooke(cookie))
 
   let needLogin = false
   let userStatus!: UserStatus

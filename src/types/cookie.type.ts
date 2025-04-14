@@ -1,1 +1,1 @@
-export type Cookie = Record<string, string | string[]>
+export type Cookie = Record<string, string>
