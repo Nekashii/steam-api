@@ -22,9 +22,11 @@ export async function userGameStatsHandler(c: Context<{ Bindings: CloudflareBind
     redirectCount < redirectLimit && nextLocation;
     redirectCount++
   ) {
-    const headers: HeadersInit = {}
-    if (cookie) headers['Cookie'] = getCookieString(cookie)
-    res = await fetch(nextLocation, { redirect: 'manual', headers })
+    const cookieString = getCookieString(cookie)
+    res = await fetch(nextLocation, {
+      redirect: 'manual',
+      headers: cookieString ? { Accept: 'text/html', Cookie: cookieString } : undefined,
+    })
     nextLocation = res.headers.get('Location')
     for (const part of res.headers.getSetCookie()) {
       const [key, value] = part.split(';')[0].split('=')
